@@ -71,3 +71,13 @@ model VerificationToken {
 
     @@unique([identifier, token])
 }
+
+model Work {
+    id String @id @default(cuid())
+    name String
+    nextDate Int
+    icon String?
+    parent String
+}
+
+model 
