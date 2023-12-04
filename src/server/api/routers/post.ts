@@ -7,36 +7,98 @@ import {
 } from "~/server/api/trpc";
 
 export const postRouter = createTRPCRouter({
-  hello: publicProcedure
-    .input(z.object({ text: z.string() }))
-    .query(({ input }) => {
-      return {
-        greeting: `Hello ${input.text}`,
-      };
-    }),
-
-  create: protectedProcedure
-    .input(z.object({ name: z.string().min(1) }))
+  getSchedules: publicProcedure.query(async ({ ctx }) => {
+    const schedules = await ctx.db.schedule.findMany({
+      where: {
+        houseWork: {
+          isActive: true,
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 1,
+      include: {
+        houseWork: true,
+      },
+    });
+    return schedules;
+  }),
+  getHouseWorks: publicProcedure.query(({ ctx }) => {
+    return ctx.db.houseWork.findMany();
+  }),
+  createNewHouseWork: publicProcedure
+    .input(
+      z.object({
+        name: z.string(),
+        span: z.number(),
+        icon: z.string(),
+        parentId: z.string(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
-      // simulate a slow db call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      return ctx.db.post.create({
+      const houseWork = await ctx.db.houseWork.create({
         data: {
           name: input.name,
-          createdBy: { connect: { id: ctx.session.user.id } },
+          span: input.span,
+          isActive: true,
+          icon: input.icon,
+          parent: input.parentId,
+        },
+      });
+      const newSchedule = await ctx.db.schedule.create({
+        data: {
+          date: new Date(),
+          houseWorkId: houseWork.id,
         },
       });
     }),
+  createNextHouseWork: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }): Promise<void> => {
+      const schedule = await ctx.db.schedule.findUnique({
+        where: { id: input.id },
+        include: { houseWork: true },
+      });
 
-  getLatest: protectedProcedure.query(({ ctx }) => {
-    return ctx.db.post.findFirst({
-      orderBy: { createdAt: "desc" },
-      where: { createdBy: { id: ctx.session.user.id } },
-    });
-  }),
+      if (!schedule) {
+        return;
+      }
 
-  getSecretMessage: protectedProcedure.query(() => {
-    return "you can now see this secret message!";
-  }),
+      const newDate = new Date();
+      newDate.setDate(newDate.getDate() + schedule.houseWork.span);
+
+      const newSchedule = await ctx.db.schedule.create({
+        data: {
+          date: newDate,
+          houseWorkId: schedule.houseWorkId,
+        },
+      });
+
+      const relatedHouseWorks = await ctx.db.houseWork.findMany({
+        where: { parent: schedule.houseWorkId },
+      });
+
+      for (const houseWork of relatedHouseWorks) {
+        const newDateForRelated = new Date();
+        newDateForRelated.setDate(newDateForRelated.getDate() + houseWork.span);
+
+        await ctx.db.schedule.create({
+          data: {
+            date: newDateForRelated,
+            houseWorkId: houseWork.id,
+          },
+        });
+      }
+    }),
+  deleteHouseWork: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }): Promise<void> => {
+      await ctx.db.schedule.deleteMany({
+        where: { houseWorkId: input.id },
+      });
+      await ctx.db.houseWork.delete({
+        where: { id: input.id },
+      });
+    }),
 });

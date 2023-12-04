@@ -72,10 +72,20 @@ model VerificationToken {
     @@unique([identifier, token])
 }
 
-model Work {
+model HouseWork {
     id String @id @default(cuid())
     name String
-    nextDate Int
+    span Int
+    isActive Boolean
     icon String?
-    parent String
+    parent String?
+    schedules Schedule[]
+}
+
+model Schedule {
+    id String @id @default(cuid())
+    date DateTime
+    houseWork HouseWork @relation(fields: [houseWorkId], references: [id])
+    houseWorkId String
+    createdAt DateTime @default(now())
 }

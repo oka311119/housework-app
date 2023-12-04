@@ -1,11 +1,14 @@
-import { api } from "~/trpc/server";
+"use client";
 
 import { Flex } from "@radix-ui/themes";
 import { Card } from "./_components/card";
 import { type Schedule } from "./_types/types";
 import Link from "next/link";
 
-export function HomePresenteation({ schedules }: { schedules: Schedule[] }) {
+export default function HomeClient({ schedules }: { schedules: Schedule[] }) {
+  const handleClick = () => {
+    console.log("click");
+  };
   return (
     <>
       <h2>schedules</h2>
@@ -17,11 +20,4 @@ export function HomePresenteation({ schedules }: { schedules: Schedule[] }) {
       <Link href="/housework">houseWork→</Link>
     </>
   );
-}
-
-export default async function Home() {
-  const schedules = await api.post.getSchedules.query();
-  console.log(schedules);
-
-  return <HomePresenteation schedules={schedules} />;
 }
