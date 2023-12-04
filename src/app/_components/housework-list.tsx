@@ -19,7 +19,12 @@ export function HouseWorkList({ houseWorks }: Props) {
 }
 
 function HouseWorkListRow(houseWork: HouseWork) {
-  const deleteHouseWork = api.post.deleteHouseWork.useMutation();
+  const trpc = api.useUtils();
+  const deleteHouseWork = api.post.deleteHouseWork.useMutation({
+    onSettled: async () => {
+      await trpc.post.getHouseWorks.invalidate();
+    },
+  });
 
   return (
     <>

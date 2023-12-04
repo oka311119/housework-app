@@ -9,12 +9,16 @@ export function HouseWorkForm() {
   const [icon, setIcon] = useState("");
   const [parentId, setParentId] = useState("");
 
-  const createHouseWork = api.post.createNewHouseWork.useMutation();
+  const trpc = api.useUtils();
+  const createHouseWork = api.post.createNewHouseWork.useMutation({
+    onSettled: async () => {
+      await trpc.post.getHouseWorks.invalidate();
+    },
+  });
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     createHouseWork.mutate({ name, span, icon, parentId });
-    window.location.reload();
   };
 
   return (

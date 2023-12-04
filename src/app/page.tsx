@@ -1,27 +1,40 @@
-import { api } from "~/trpc/server";
+"use client";
+
+import { api } from "~/trpc/react";
 
 import { Flex } from "@radix-ui/themes";
 import { Card } from "./_components/card";
-import { type Schedule } from "./_types/types";
 import Link from "next/link";
+import { LoadingIndicator } from "./_components/loading-indicator";
+import { ErrorText } from "./_components/error-text";
 
-export function HomePresenteation({ schedules }: { schedules: Schedule[] }) {
+export default function Home() {
+  const {
+    data: schedules,
+    isLoading,
+    isError,
+  } = api.post.getSchedules.useQuery();
+  const createNextHouseWork = api.post.createNextHouseWork.useMutation();
+
+  if (isLoading) return <LoadingIndicator />;
+
+  if (isError) return <ErrorText />;
+
   return (
     <>
       <h2>schedules</h2>
       <Flex direction="column" gap="2">
-        {schedules.map((schedule) => (
-          <Card key={schedule.id} schedule={schedule} />
+        {schedules?.map((schedule) => (
+          <Card
+            key={schedule.id}
+            schedule={schedule}
+            createNextHouseWork={async () =>
+              createNextHouseWork.mutate({ id: schedule.id })
+            }
+          />
         ))}
       </Flex>
       <Link href="/housework">houseWork→</Link>
     </>
   );
-}
-
-export default async function Home() {
-  const schedules = await api.post.getSchedules.query();
-  console.log(schedules);
-
-  return <HomePresenteation schedules={schedules} />;
 }

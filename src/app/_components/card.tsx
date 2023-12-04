@@ -3,15 +3,18 @@
 import { Box, Text } from "@radix-ui/themes";
 import { useState } from "react";
 import { type Schedule } from "../_types/types";
-import { api } from "~/trpc/react";
+import { calculateDateDifference } from "../helper/calculate-date";
 
-export function Card({ schedule }: { schedule: Schedule }) {
-  const diffDays = calculateDateDifference(
-    schedule.date as string | number | Date,
-  );
+export function Card({
+  schedule,
+  createNextHouseWork,
+}: {
+  schedule: Schedule;
+  createNextHouseWork: () => Promise<void>;
+}) {
+  const diffDays = calculateDateDifference(new Date(schedule.date));
   let iconColor = null;
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const { mutate } = api.post.createNextHouseWork.useMutation();
 
   if (diffDays === 0) {
     iconColor = "yellow";
@@ -21,10 +24,7 @@ export function Card({ schedule }: { schedule: Schedule }) {
 
   const handleScheduleClick = async (id: string) => {
     if (selectedId === id) {
-      // await createNextHouseWork(id);
-      mutate({ id });
-      // .useMutation({ id: id })
-      // .catch((error) => console.error(error));
+      await createNextHouseWork();
       setSelectedId(null);
     } else {
       setSelectedId(id);
@@ -42,17 +42,4 @@ export function Card({ schedule }: { schedule: Schedule }) {
       {/* {iconColor && <Icon color={iconColor} />} */}
     </Box>
   );
-}
-
-function calculateDateDifference(scheduleDate: string | number | Date) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const schedule = new Date(scheduleDate);
-  schedule.setHours(0, 0, 0, 0);
-
-  const diffTime = Math.abs(schedule.getTime() - today.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  return diffDays;
 }

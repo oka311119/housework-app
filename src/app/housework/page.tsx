@@ -1,29 +1,27 @@
-import { type HouseWork } from "@prisma/client";
-import { notFound } from "next/navigation";
-import { api } from "~/trpc/server";
+"use client";
+
+import { api } from "~/trpc/react";
 import { HouseWorkList } from "../_components/housework-list";
 import { HouseWorkForm } from "../_components/housework-form";
+import { LoadingIndicator } from "../_components/loading-indicator";
+import { ErrorText } from "../_components/error-text";
 
-type PresentationProps = {
-  readonly houseWorks: HouseWork[];
-};
+export default function HouseWorkPage() {
+  const {
+    data: houseWorks,
+    isLoading,
+    isError,
+  } = api.post.getHouseWorks.useQuery();
 
-function HouseWorkPagePresentation({ houseWorks }: PresentationProps) {
+  if (isLoading) return <LoadingIndicator />;
+
+  if (isError) return <ErrorText />;
+
   return (
     <>
       <h2>housework</h2>
-      <HouseWorkList houseWorks={houseWorks} />
+      <HouseWorkList houseWorks={houseWorks ?? []} />
       <HouseWorkForm />
     </>
   );
-}
-
-export default async function HouseWorkPage() {
-  const houseWorks = await api.post.getHouseWorks.query();
-
-  if (!houseWorks) {
-    return notFound();
-  }
-
-  return HouseWorkPagePresentation({ houseWorks });
 }
