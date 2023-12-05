@@ -1,40 +1,19 @@
 "use client";
 
-import { api } from "~/trpc/react";
+import { Box, Button, Flex, Link } from "@chakra-ui/react";
+import { ScheduleList } from "./_components/schedule/schedule-list";
 
-import { Flex } from "@radix-ui/themes";
-import { Card } from "./_components/card";
-import Link from "next/link";
-import { LoadingIndicator } from "./_components/loading-indicator";
-import { ErrorText } from "./_components/error-text";
-
-export default function Home() {
-  const {
-    data: schedules,
-    isLoading,
-    isError,
-  } = api.post.getSchedules.useQuery();
-  const createNextHouseWork = api.post.createNextHouseWork.useMutation();
-
-  if (isLoading) return <LoadingIndicator />;
-
-  if (isError) return <ErrorText />;
-
+export default function Page() {
   return (
-    <>
-      <h2>schedules</h2>
-      <Flex direction="column" gap="2">
-        {schedules?.map((schedule) => (
-          <Card
-            key={schedule.id}
-            schedule={schedule}
-            createNextHouseWork={async () =>
-              createNextHouseWork.mutate({ id: schedule.id })
-            }
-          />
-        ))}
-      </Flex>
-      <Link href="/housework">houseWork→</Link>
-    </>
+    <Flex w="100%" h="100vh" bg={"gray"} direction="column" align="center">
+      <Box position="fixed" right={5} top={5} zIndex={10}>
+        <Button variant="ghost">
+          <Link href="/housework">家事一覧</Link>
+        </Button>
+      </Box>
+      <Box w={"100%"} flex="1" overflowY="scroll" p={4} bg={"lightGray"}>
+        <ScheduleList />
+      </Box>
+    </Flex>
   );
 }

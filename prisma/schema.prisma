@@ -85,6 +85,7 @@ model HouseWork {
 model Schedule {
     id String @id @default(cuid())
     date DateTime
+    doneDate DateTime?
     houseWork HouseWork @relation(fields: [houseWorkId], references: [id])
     houseWorkId String
     createdAt DateTime @default(now())
