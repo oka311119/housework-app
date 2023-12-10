@@ -4,4 +4,5 @@ export type HouseWork = {
   span: number;
   icon: string | null;
   parent: string | null;
+  createdAt: Date;
 };

@@ -1,28 +1,12 @@
 import { format } from "date-fns";
 import { type Schedule } from "./type";
 import { api } from "~/trpc/react";
-import { Box, Button, HStack, Text, VStack, Spacer } from "@chakra-ui/react";
-import { CheckIcon } from "@chakra-ui/icons";
+import { Box, Button, Flex, HStack, Text } from "@chakra-ui/react";
+import { CheckIcon, RepeatClockIcon } from "@chakra-ui/icons";
 import { useState } from "react";
 import { differenceInDays, startOfDay } from "date-fns";
 
 export function ScheduleRow(schedule: Schedule) {
-  const doneDateElement = schedule.doneDate ? <CheckIcon /> : null;
-
-  return (
-    <>
-      <Box bg={"whitesmoke"} p={4}>
-        <Text>
-          {doneDateElement}
-          {schedule.houseWork.name}
-        </Text>
-        <Text>{format(schedule.date, "yyyy-MM-dd")}</Text>
-      </Box>
-    </>
-  );
-}
-
-export function ScheduleRowPending(schedule: Schedule) {
   const [isSelected, setIdSelected] = useState(false);
 
   const today = startOfDay(new Date());
@@ -31,6 +15,11 @@ export function ScheduleRowPending(schedule: Schedule) {
 
   const trpc = api.useUtils();
   const createNext = api.schedule.createNext.useMutation({
+    onSettled: async () => {
+      await trpc.schedule.pendingAll.invalidate();
+    },
+  });
+  const undo = api.schedule.undo.useMutation({
     onSettled: async () => {
       await trpc.schedule.pendingAll.invalidate();
     },
@@ -47,7 +36,7 @@ export function ScheduleRowPending(schedule: Schedule) {
   return (
     <>
       <Box
-        bg={"whitesmoke"}
+        bg={"white"}
         px={4}
         onClick={onCardTapped}
         h={"120px"}
@@ -61,15 +50,35 @@ export function ScheduleRowPending(schedule: Schedule) {
           <Text fontSize="md">{schedule.houseWork.name}</Text>
         </HStack>
         <Text fontSize="sm">{format(schedule.date, "MM月dd日")}</Text>
-        <Button
-          flex="1"
-          variant="ghost"
-          leftIcon={<CheckIcon />}
-          onClick={() => createNext.mutate({ id: schedule.id })}
-          hidden={!isSelected}
-        >
-          Done
-        </Button>
+        <HStack>
+          <Button
+            flex="1"
+            variant="ghost"
+            leftIcon={<CheckIcon />}
+            onClick={() => createNext.mutate({ id: schedule.id })}
+            hidden={!isSelected}
+          >
+            <Flex alignItems="baseline">
+              <Text fontWeight="bold">Done</Text>
+              <Text fontSize="sm" hidden={!!schedule.houseWork.parent}>
+                (+{schedule.houseWork.span})
+              </Text>
+            </Flex>
+          </Button>
+
+          <Button
+            flex="1"
+            variant="ghost"
+            leftIcon={<RepeatClockIcon />}
+            onClick={() => undo.mutate({ id: schedule.houseWork.id })}
+            hidden={!isSelected || !!schedule.houseWork.parent}
+          >
+            <Flex alignItems="baseline">
+              <Text fontWeight="bold">Undo</Text>
+              <Text fontSize="sm">(-{schedule.houseWork.span})</Text>
+            </Flex>
+          </Button>
+        </HStack>
       </Box>
     </>
   );

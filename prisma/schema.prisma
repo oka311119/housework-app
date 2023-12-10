@@ -80,6 +80,7 @@ model HouseWork {
     icon String?
     parent String?
     schedules Schedule[]
+    createdAt DateTime @default(now())
 }
 
 model Schedule {

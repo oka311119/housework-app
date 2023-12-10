@@ -54,6 +54,13 @@ export const scheduleRouter = createTRPCRouter({
         throw new Error("Schedule not found");
       }
 
+      /// 親タスクがある場合は終了
+      if (schedule.houseWork.parent) {
+        console.log("aaaa");
+        return;
+      }
+      console.log("bbb");
+
       const newSchedules = [];
 
       const current = new Date();
@@ -80,6 +87,26 @@ export const scheduleRouter = createTRPCRouter({
       // 新しいスケジュールをデータベースに一括挿入
       await ctx.db.schedule.createMany({
         data: newSchedules,
+      });
+    }),
+  undo: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }): Promise<void> => {
+      const schedules = await ctx.db.schedule.findMany({
+        where: { houseWorkId: input.id },
+        orderBy: { createdAt: "desc" },
+        take: 2,
+      });
+      if (!schedules[0] || !schedules[1]) {
+        throw new Error("スケジュールが見つかりません");
+      }
+
+      await ctx.db.schedule.delete({
+        where: { id: schedules[0].id },
+      });
+      await ctx.db.schedule.update({
+        where: { id: schedules[1].id },
+        data: { doneDate: null },
       });
     }),
 });
