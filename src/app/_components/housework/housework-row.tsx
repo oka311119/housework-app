@@ -38,7 +38,12 @@ export function HouseWorkRow({
         <Button
           variant="ghost"
           leftIcon={<DeleteIcon />}
-          onClick={() => deleteHouseWork.mutate({ id: houseWork.id })}
+          onClick={() => {
+            const confirmDelete = window.confirm("本当に削除しますか？");
+            if (confirmDelete) {
+              deleteHouseWork.mutate({ id: houseWork.id });
+            }
+          }}
         >
           Delete
         </Button>

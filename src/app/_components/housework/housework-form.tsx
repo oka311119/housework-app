@@ -127,11 +127,13 @@ export function HouseWorkForm({ initialData }: HouseWorkFormProps) {
               value={parentId ?? ""}
               onChange={(e) => setParentId(e.target.value)}
             >
-              {parents.data?.map((parent, index) => (
-                <option key={index} value={parent.id}>
-                  {parent.name}
-                </option>
-              ))}
+              {parents?.data
+                ?.filter((parent) => parent.parent === null)
+                .map((parent) => (
+                  <option key={parent.id} value={parent.id}>
+                    {parent.name}
+                  </option>
+                ))}
             </Select>
           </FormControl>
 
